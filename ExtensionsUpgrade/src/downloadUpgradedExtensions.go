@@ -47,7 +47,7 @@ func contains(s []string, e string) bool {
 func main(){
 	// Make sure required parameters are passed
 	if (len(os.Args) != 4) {
-		fmt.Printf("Please issue command in the following format: command <AIP install location> <user> <password>\n")
+		fmt.Printf("Please issue command in the following format: command <AIP install location> <user> <password>\n") 
 		fmt.Println("Example: downloadUpgradedExtensions.exe \"C:\\Program Files\\Cast\\8.3.3\" p.rabinovich@castsoftware.com xxxxxx")
 		os.Exit(1)
 	}
