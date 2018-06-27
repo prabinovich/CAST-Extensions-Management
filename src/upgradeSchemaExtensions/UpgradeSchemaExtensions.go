@@ -121,7 +121,7 @@ func copyAndCapture(w io.Writer, r io.Reader) ([]byte, error) {
 	return nil, nil
 	}
 
-func writeCentralHeader (f *os.File, s string, dbHost string, dbPort string) () {
+/*func writeCentralHeader (f *os.File, s string, dbHost string, dbPort string) () {
 	
 	f.WriteString("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n")
 	f.WriteString("<CAST-AutomaticInstall>\n")
@@ -160,6 +160,19 @@ func writeMngtHeader (f *os.File, s string, dbHost string, dbPort string) () {
 	f.WriteString(fmt.Sprintf(" <ServerInstall ProfileSystem=\"PROFILE_NAME\" ServerType=\"CASTStorageService\" UserSystem=\"%s\" SystemPassword=\"%s\" ServerName=\"%s:%s\" >\n", DB_USER, DB_PASSWORD, dbHost, dbPort))
 	f.WriteString(fmt.Sprintf("  <RefreshDatabase DbName=\"%s\" >\n", s))
 	f.WriteString("   <PackName >PMC_MAIN</PackName>\n")
+	f.WriteString("\n")
+	f.WriteString("	<!-- Extensions: install most recent that has been downloaded -->\n")
+	
+	return
+}*/
+
+func writeCommonHeader (f *os.File, s string, dbHost string, dbPort string) () {
+	
+	f.WriteString("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n")
+	f.WriteString("<CAST-AutomaticInstall>\n")
+	f.WriteString("<!-- Use either ServerName= or ConnectionString= -->\n")
+	f.WriteString(fmt.Sprintf(" <ServerInstall ProfileSystem=\"PROFILE_NAME\" ServerType=\"CASTStorageService\" UserSystem=\"%s\" SystemPassword=\"%s\" ServerName=\"%s:%s\" >\n", DB_USER, DB_PASSWORD, dbHost, dbPort))
+	f.WriteString(fmt.Sprintf("  <RefreshDatabase DbName=\"%s\" >\n", s))
 	f.WriteString("\n")
 	f.WriteString("	<!-- Extensions: install most recent that has been downloaded -->\n")
 	
@@ -211,7 +224,7 @@ func main() {
 	// Create temp directory inside current directory
 	tempDir, panicErr := ioutil.TempDir(currDir, "CAST")
 	if panicErr != nil {log.Fatal(panicErr)}
-	//defer os.RemoveAll(tempDir)
+	defer os.RemoveAll(tempDir)
 	
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s database=postgres sslmode=disable",
 		dbHost, dbPort, DB_USER, DB_PASSWORD)
@@ -257,11 +270,11 @@ func main() {
 			
 			// Write header for the INSTALL_CONFIG_FILE; vary based on schema type
 			if schemaType == "central" {
-				writeCentralHeader(f, schemaName, dbHost, dbPort)
+				writeCommonHeader(f, schemaName, dbHost, dbPort)
 			} else if schemaType == "local" {
-				writeLocalHeader(f, schemaName, dbHost, dbPort )
+				writeCommonHeader(f, schemaName, dbHost, dbPort )
 			} else if schemaType == "mngt" {
-				writeMngtHeader(f, schemaName, dbHost, dbPort)
+				writeCommonHeader(f, schemaName, dbHost, dbPort)
 			} else {
 				panic("!!!! Unknown schema type!!!")
 			}

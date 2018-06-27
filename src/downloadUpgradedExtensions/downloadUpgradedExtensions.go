@@ -46,25 +46,37 @@ func contains(s []string, e string) bool {
 
 func main(){
 	// Make sure required parameters are passed
-	if (len(os.Args) != 4) {
-		fmt.Printf("Please issue command in the following format: command <AIP install location> <user> <password>\n") 
-		fmt.Println("Example: downloadUpgradedExtensions.exe \"C:\\Program Files\\Cast\\8.3.3\" p.rabinovich@castsoftware.com xxxxxx")
+	if (len(os.Args) != 6) {
+		fmt.Printf("Please issue command in the following format: command <AIP install location> <Extend Server URL> <User ID> <Password> <stableOnly or latest>\n") 
+		fmt.Println("Example: downloadUpgradedExtensions.exe \"C:\\Program Files\\Cast\\8.3.3\" \"https://extend.castsoftware.com:443/V2/api/v2\" p.rabinovich@castsoftware.com xxxxxx stableOnly")
 		os.Exit(1)
 	}
 
+	// Get parameterrs passed to the 
 	aipDir := os.Args[1]
-	extUsr := os.Args[2]
-	extPass := os.Args[3]
+	serverURL := os.Args[2]
+	extUsr := os.Args[3]
+	extPass := os.Args[4]
+	var stableOrLatest string
+	// Check that the 
+	if strings.EqualFold(os.Args[5], "stableOnly") {
+		stableOrLatest = "stableOnly"
+	} else if strings.EqualFold(os.Args[5], "latest") {
+		stableOrLatest = "latest"
+	} else {
+		fmt.Println("Please correct laast parameter to specify which versions of extensions to get. Parameter must be stableOnly or latest")
+		os.Exit(1)
+	}
 	
 	// Check if folder location provided is valid
 	if _, err := os.Stat(aipDir); os.IsNotExist(err) {
 		fmt.Printf("Specified AIP directory location is invalid: %s\n", aipDir)
 		fmt.Printf("Please verify and correct\n")
 		os.Exit(1)
-	} 
+	}
 	
 	fmt.Printf("Checking for upgradable extensions...\n")
-	cmd := exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", "https://extend.castsoftware.com:443/V2/api/v2", "--username", extUsr, "--password", extPass, "list", "upgradable")
+	cmd := exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "upgradable")
 	var stdout, stderr []byte
 	var errStdout, errStderr error
 	stdoutIn, _ := cmd.StdoutPipe()
@@ -96,23 +108,51 @@ func main(){
 	} else {
 		fmt.Printf("\nNo new versions of installed extensions found. All is up to date.\n")
 	}
-	for _, element := range extVerList {
-		extInfo := strings.Fields(element)
+	for _, extFull := range extVerList {
+		// Split extension informatino returned into extensino id and version
+		extInfo := strings.Fields(extFull)
 		if len(extInfo) == 2 {
+			//fmt.Printf("Processing extension %s\n", extFull)
 			extID := extInfo[0]
-			if !contains(extList, extID) {
-				extList = append(extList, extID)
-				fmt.Printf("Upgrading extension: %s\n", extID)
-				cmd := exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", "https://extend.castsoftware.com:443/V2/api/v2", "--username", extUsr, "--password", extPass, "install", extID)
+			extVer := extInfo[1]
+			cmd := exec.Command("cmd", "/c")
+			upgradeFlag := false
+			// Install latest or stable only based on the passed argument
+			if stableOrLatest == "stableOnly" {
+				// skip if the extension is Alpha or Beta and stableOnly flag is set
+				if strings.Contains(strings.ToLower(extVer), "alpha") || strings.Contains(strings.ToLower(extVer), "beta") {
+					fmt.Printf("Unstable version of extension... Skipping: %s\n", extFull)
+				} else {
+					fmt.Printf("Installing extension: %s\n", extFull)
+					cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID, "--version", extVer)
+					upgradeFlag = true
+				}	
+			} else if stableOrLatest == "latest" {
+				// If extension is not already on the list
+				if !contains(extList, extID) {
+
+					// Add to the list first
+					extList = append(extList, extID)
+					fmt.Printf("Upgrading extension: %s to latest available version\n", extID)
+					cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID)
+					upgradeFlag = true
+				} else {
+					fmt.Printf("Latest version of this extension is already installed: %s\n", extID)
+				}
+				
+			}
+			
+			// Only execute upgrade command if upgrade flag is set
+			if upgradeFlag {
 				fmt.Printf("Executing command: %s\n", cmd.Args)
 				stdoutIn, _ := cmd.StdoutPipe()
 				stderrIn, _ := cmd.StderrPipe()
 				cmd.Start()
-
+	
 				go func() {
 					stdout, errStdout = copyAndCapture(os.Stdout, stdoutIn)
 				}()
-
+	
 				go func() {
 					stderr, errStderr = copyAndCapture(os.Stderr, stderrIn)
 				}()
@@ -121,6 +161,4 @@ func main(){
 			}
 		}
 	}
-	
-	//fmt.Printf("ext:\n%s\n", outStr)
 }
