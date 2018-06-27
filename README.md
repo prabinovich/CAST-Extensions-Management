@@ -15,11 +15,11 @@ go build -o test1.exe test1.go
 DownloadUpgradedExtensions Script
 ==================================
 The script will need to be provided the following parameters:
-- <AIP install location> - location of where CAST AIP is installed
-- <Extend Server URL> - Extend server URL (ex. https://extend.castsoftware.com:443/V2/api/v2)
-- <user> - username for Extend website
-- <password> - password for Extend website
-- <stableOnly or latest> - determines wether to download only stable (skip Alpha and Beta releases) or the latest available
+- AIP install location - location of where CAST AIP is installed
+- Extend Server URL - Extend server URL (ex. https://extend.castsoftware.com:443/V2/api/v2)
+- user - username for Extend website
+- password - password for Extend website
+- stableOnly or latest - determines wether to download only stable (skip Alpha and Beta releases) or the latest available
   
 Here's an example of how you can execute the program:
 downloadUpgradedExtensions.exe "C:\Program Files\Cast\8.3.3" https://extend.castsoftware.com:443/V2/api/v2 p.rabinovich@castsoftware.com xxxxxx stableOnly
@@ -29,10 +29,10 @@ Note: Currently there is a problem with the ExtensionDownloader.exe CLI that fai
 UpgradeSchemaExtensions Script
 ===============================
 The script will need to be provided the following parameters:
-- <AIP install location> - location of where CAST AIP is installed
-- <db host> - name or IP of the server that hosts cast storage services CSS
-- <db port> - port number on which CSS runs
-- <schema prefix> - schema prefix that should be considered for upgrade. The prefix can include % as part of the string to represent a wildcard or just % to include all schemas hosted on the designed CSS server
+- AIP install location - location of where CAST AIP is installed
+- db host - name or IP of the server that hosts cast storage services CSS
+- db port - port number on which CSS runs
+- schema prefix - schema prefix that should be considered for upgrade. The prefix can include % as part of the string to represent a wildcard or just % to include all schemas hosted on the designed CSS server
 
 Here's an example of how to execute the program:
 upgradeSchemaExtensions.exe "C:\Program Files\Cast\8.3.3" localhost 2282 foo%
