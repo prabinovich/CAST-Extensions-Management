@@ -46,9 +46,9 @@ func contains(s []string, e string) bool {
 
 func main(){
 	// Make sure required parameters are passed
-	if (len(os.Args) != 6) {
-		fmt.Printf("Please issue command in the following format: command <AIP install location> <Extend Server URL> <User ID> <Password> <stableOnly or latest>\n") 
-		fmt.Println("Example: downloadUpgradedExtensions.exe \"C:\\Program Files\\Cast\\8.3.3\" \"https://extend.castsoftware.com:443/V2/api/v2\" p.rabinovich@castsoftware.com xxxxxx stableOnly")
+	if (len(os.Args) != 8) {
+		fmt.Printf("Please issue command in the following format: command <AIP install location> <Extend Server URL> <User ID> <Password> <upgrade|install> <official|all> <stable|latest>\n") 
+		fmt.Println("Example: downloadUpgradedExtensions.exe \"C:\\Program Files\\Cast\\8.3.3\" \"https://extend.castsoftware.com:443/V2/api/v2\" p.rabinovich@castsoftware.com xxxxxx upgrade all stable")
 		os.Exit(1)
 	}
 
@@ -57,14 +57,23 @@ func main(){
 	serverURL := os.Args[2]
 	extUsr := os.Args[3]
 	extPass := os.Args[4]
-	var stableOrLatest string
-	// Check that the 
-	if strings.EqualFold(os.Args[5], "stableOnly") {
-		stableOrLatest = "stableOnly"
-	} else if strings.EqualFold(os.Args[5], "latest") {
-		stableOrLatest = "latest"
-	} else {
-		fmt.Println("Please correct laast parameter to specify which versions of extensions to get. Parameter must be stableOnly or latest")
+	
+	// upgrade|install
+	upgradeOrInstall := os.Args[5]
+	if !strings.EqualFold(upgradeOrInstall, "upgrade") && !strings.EqualFold(upgradeOrInstall, "install") {
+		fmt.Println("Incorrect parameter specified. Please provide one of the following options: upgrade|install")
+		os.Exit(1)
+	}
+	// official|all
+	officialOrAll := os.Args[6]
+	if !strings.EqualFold(officialOrAll, "official") && !strings.EqualFold(officialOrAll, "all") {
+		fmt.Println("Incorrect parameter specified. Please provide one of the following options: official|all")
+		os.Exit(1)
+	}
+	// stable|latest
+	stableOrLatest := os.Args[7]
+	if !strings.EqualFold(stableOrLatest, "stable") && !strings.EqualFold(stableOrLatest, "latest") {
+		fmt.Println("Incorrect parameter specified. Please provide one of the following options: stable|latest")
 		os.Exit(1)
 	}
 	
@@ -75,8 +84,16 @@ func main(){
 		os.Exit(1)
 	}
 	
-	fmt.Printf("Checking for upgradable extensions...\n")
-	cmd := exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "upgradable")
+	// Get list of upgradeable extensions or all available based on defined params
+	cmd := exec.Command("foo1")
+	if upgradeOrInstall == "upgrade" {
+		fmt.Printf("Checking for upgradable extensions...\n")
+		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "upgradable")
+	} else {
+		fmt.Printf("Checking for available extensions...\n")
+		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "available")
+	}
+	
 	var stdout, stderr []byte
 	var errStdout, errStderr error
 	stdoutIn, _ := cmd.StdoutPipe()
@@ -116,18 +133,27 @@ func main(){
 			extID := extInfo[0]
 			extVer := extInfo[1]
 			cmd := exec.Command("cmd", "/c")
-			upgradeFlag := false
-			// Install latest or stable only based on the passed argument
-			if stableOrLatest == "stableOnly" {
+			skipFlag := false
+			// Check if installing offical or all extensions
+			if officialOrAll == "official" {
+				// Check if author of extenion is CASTLabs or CASTUserCommunity 
+				if strings.Contains(extID, "com.castsoftware.labs.") || strings.Contains(extID, "com.castsoftware.uc.") {
+					fmt.Printf("Not an offical CAST extension... Skipping: %s\n", extFull)
+					skipFlag = true
+				}
+			}
+			
+			// Install latest or stable version based on passed argument
+			if !skipFlag && stableOrLatest == "stable" {
 				// skip if the extension is Alpha or Beta and stableOnly flag is set
 				if strings.Contains(strings.ToLower(extVer), "alpha") || strings.Contains(strings.ToLower(extVer), "beta") {
 					fmt.Printf("Unstable version of extension... Skipping: %s\n", extFull)
+					skipFlag = true
 				} else {
 					fmt.Printf("Installing extension: %s\n", extFull)
 					cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID, "--version", extVer)
-					upgradeFlag = true
 				}	
-			} else if stableOrLatest == "latest" {
+			} else if !skipFlag && stableOrLatest == "latest" {
 				// If extension is not already on the list
 				if !contains(extList, extID) {
 
@@ -135,15 +161,15 @@ func main(){
 					extList = append(extList, extID)
 					fmt.Printf("Upgrading extension: %s to latest available version\n", extID)
 					cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID)
-					upgradeFlag = true
 				} else {
 					fmt.Printf("Latest version of this extension is already installed: %s\n", extID)
+					skipFlag = true
 				}
 				
 			}
 			
-			// Only execute upgrade command if upgrade flag is set
-			if upgradeFlag {
+			// Only execute upgrade command if skip flag is not set
+			if !skipFlag {
 				fmt.Printf("Executing command: %s\n", cmd.Args)
 				stdoutIn, _ := cmd.StdoutPipe()
 				stderrIn, _ := cmd.StderrPipe()
