@@ -48,7 +48,7 @@ func main(){
 	// Make sure required parameters are passed
 	if (len(os.Args) != 8) {
 		fmt.Printf("Please issue command in the following format: command <AIP install location> <Extend Server URL> <User ID> <Password> <upgrade|install> <official|all> <stable|latest>\n") 
-		fmt.Println("Example: downloadUpgradedExtensions.exe \"C:\\Program Files\\Cast\\8.3.3\" \"https://extend.castsoftware.com:443/V2/api/v2\" p.rabinovich@castsoftware.com xxxxxx upgrade all stable")
+		fmt.Println("Example: downloadExtensions.exe \"C:\\Program Files\\Cast\\8.3.3\" \"https://extend.castsoftware.com:443/V2/api/v2\" p.rabinovich@castsoftware.com xxxxxx upgrade all stable")
 		os.Exit(1)
 	}
 
@@ -192,6 +192,9 @@ func main(){
 			stderr, errStderr = copyAndCapture(os.Stderr, stderrIn)
 		}()
 		err := cmd.Wait()
-		if err != nil {log.Fatalf("cmd.Run() failed with %s\n", err)}
+		if err != nil {
+			log.Printf("cmd.Run() failed with %s\n", err)
+			log.Printf("Failed command line: %s\n", cmd.Args)
+		}
 	}
 }
