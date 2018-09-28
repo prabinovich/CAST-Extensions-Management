@@ -87,10 +87,10 @@ func main(){
 	// Get list of upgradeable extensions or all available based on defined params
 	cmd := exec.Command("foo1")
 	if upgradeOrInstall == "upgrade" {
-		fmt.Printf("Checking for upgradable extensions...\n")
+		fmt.Printf("Pass 1 - Checking for upgradable extensions...\n")
 		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "upgradable")
 	} else {
-		fmt.Printf("Checking for available extensions...\n")
+		fmt.Printf("Pass 1 - Checking for available extensions...\n")
 		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "available")
 	}
 	
@@ -118,10 +118,11 @@ func main(){
 	
 	outStr := string(stdout)
 	
+	// Identify extensions to install based on passed arguments
 	extVerList := strings.Split(outStr,"\n")
-	extList := []string{}
+	installQueue := make(map[string]string)
 	if len(extVerList) > 1 {
-		fmt.Printf("\nStarting extension upgrade process...\n")
+		fmt.Printf("\nPass 2 - Starting extension install/upgrade process...\n")
 	} else {
 		fmt.Printf("\nNo new versions of installed extensions found. All is up to date.\n")
 	}
@@ -129,11 +130,10 @@ func main(){
 		// Split extension informatino returned into extensino id and version
 		extInfo := strings.Fields(extFull)
 		if len(extInfo) == 2 {
-			//fmt.Printf("Processing extension %s\n", extFull)
 			extID := extInfo[0]
 			extVer := extInfo[1]
-			cmd := exec.Command("cmd", "/c")
 			skipFlag := false
+			
 			// Check if installing offical or all extensions
 			if officialOrAll == "official" {
 				// Check if author of extenion is CASTLabs or CASTUserCommunity 
@@ -149,42 +149,49 @@ func main(){
 				if strings.Contains(strings.ToLower(extVer), "alpha") || strings.Contains(strings.ToLower(extVer), "beta") {
 					fmt.Printf("Unstable version of extension... Skipping: %s\n", extFull)
 					skipFlag = true
-				} else {
-					fmt.Printf("Installing extension: %s\n", extFull)
-					cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID, "--version", extVer)
-				}	
-			} else if !skipFlag && stableOrLatest == "latest" {
-				// If extension is not already on the list
-				if !contains(extList, extID) {
-
-					// Add to the list first
-					extList = append(extList, extID)
-					fmt.Printf("Upgrading extension: %s to latest available version\n", extID)
-					cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID)
-				} else {
-					fmt.Printf("Latest version of this extension is already installed: %s\n", extID)
-					skipFlag = true
 				}
-				
 			}
 			
-			// Only execute upgrade command if skip flag is not set
 			if !skipFlag {
-				fmt.Printf("Executing command: %s\n", cmd.Args)
-				stdoutIn, _ := cmd.StdoutPipe()
-				stderrIn, _ := cmd.StderrPipe()
-				cmd.Start()
-	
-				go func() {
-					stdout, errStdout = copyAndCapture(os.Stdout, stdoutIn)
-				}()
-	
-				go func() {
-					stderr, errStderr = copyAndCapture(os.Stderr, stderrIn)
-				}()
-				err := cmd.Wait()
-				if err != nil {log.Fatalf("cmd.Run() failed with %s\n", err)}
+				// Check if extension is already on the install queue
+				if val, ok:= installQueue[extID]; !ok {
+					fmt.Printf("Adding extension to install queue: %s\n", extFull)
+					installQueue[extID] = extVer
+				} else {
+					// Check if the current version later then the one on install queue and update
+					if val < extVer {
+						fmt.Printf("Updating install queue for extension %s version from %s -> %s\n", extID, installQueue[extID], extVer)
+						installQueue[extID] = extVer
+					}
+				}
 			}
 		}
+	}
+	
+	if len(installQueue) > 0 {
+		fmt.Printf("\nPass 3 - Installing identified extensions...\n")
+	} else {
+		fmt.Printf("\nNo extensions identified for installation. All is up to date.\n")
+	}
+	
+	// Install all extensions identified
+	for extID, extVer := range installQueue {
+		// Only execute upgrade command if skip flag is not set
+		fmt.Printf("Installing extension: %s %s\n", extID, extVer)
+		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID, "--version", extVer)
+		//fmt.Printf("Executing command: %s\n", cmd.Args)
+		stdoutIn, _ := cmd.StdoutPipe()
+		stderrIn, _ := cmd.StderrPipe()
+		cmd.Start()
+
+		go func() {
+			stdout, errStdout = copyAndCapture(os.Stdout, stdoutIn)
+		}()
+
+		go func() {
+			stderr, errStderr = copyAndCapture(os.Stderr, stderrIn)
+		}()
+		err := cmd.Wait()
+		if err != nil {log.Fatalf("cmd.Run() failed with %s\n", err)}
 	}
 }
