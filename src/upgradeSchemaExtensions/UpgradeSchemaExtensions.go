@@ -224,7 +224,7 @@ func main() {
 	// Create temp directory inside current directory
 	tempDir, panicErr := ioutil.TempDir(currDir, "CAST")
 	if panicErr != nil {log.Fatal(panicErr)}
-	defer os.RemoveAll(tempDir)
+	//defer os.RemoveAll(tempDir)
 	
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s database=postgres sslmode=disable",
 		dbHost, dbPort, DB_USER, DB_PASSWORD)

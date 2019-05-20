@@ -1,0 +1,5 @@
+/tools.zip
+CAST[0-9]+
+*.castlog
+*.xml
+*.txt
