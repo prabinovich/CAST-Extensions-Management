@@ -11,7 +11,11 @@ To rebuild one of the build programs:
 - Use this command to rebuild the file:
 
 cd into BIN directory of the project where EXE binaries are located (.\bin)
-Compile using this command line: go build -o downloadExtensions.exe ..\src\downloadExtensions\downloadExtensions.go
+Compile using this command line: 
+
+go build -o downloadExtensions.exe ..\src\downloadExtensions\downloadExtensions.go
+-or-
+go build -o upgradeSchemaExtensions_AIP837.exe ..\src\upgradeSchemaExtensions\upgradeSchemaExtensions_AIP837.go
 
 DownloadExtensions Script
 ==================================
@@ -32,7 +36,7 @@ Note: Currently there is a problem with the ExtensionDownloader.exe CLI that fai
 UpgradeSchemaExtensions Script
 ===============================
 The script will need to be provided the following parameters:
-- AIP install location - location of where CAST AIP is installed
+- AIP install location - location of where CAST AIP is installed; Make sure to user short folder notation (i.e. C:\Progra~1\... instead of C:\Program Files\...)
 - db host - name or IP of the server that hosts cast storage services CSS
 - db port - port number on which CSS runs
 - schema prefix - schema prefix that should be considered for upgrade. The prefix can include % as part of the string to represent a wildcard or just % to include all schemas hosted on the designed CSS server

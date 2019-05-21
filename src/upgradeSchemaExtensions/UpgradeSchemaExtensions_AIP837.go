@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	DB_USER     = "operator"
-	DB_PASSWORD = "CastAIP"
+	//DB_USER     = "operator"
+	//DB_PASSWORD = "CastAIP"
 )
 
 type extVerStruct struct {
@@ -121,12 +121,12 @@ func copyAndCapture(w io.Writer, r io.Reader) ([]byte, error) {
 	return nil, nil
 	}
 
-func writeCommonHeader (f *os.File, s string, dbHost string, dbPort string) () {
+func writeCommonHeader (f *os.File, s string, dbHost string, dbPort string, dbUser string, dbPass string) () {
 	
 	f.WriteString("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n")
 	f.WriteString("<CAST-AutomaticInstall>\n")
 	f.WriteString("<!-- Use either ServerName= or ConnectionString= -->\n")
-	f.WriteString(fmt.Sprintf(" <ServerInstall ProfileSystem=\"PROFILE_NAME\" ServerType=\"CASTStorageService\" UserSystem=\"%s\" SystemPassword=\"%s\" ServerName=\"%s:%s\" >\n", DB_USER, DB_PASSWORD, dbHost, dbPort))
+	f.WriteString(fmt.Sprintf(" <ServerInstall ProfileSystem=\"PROFILE_NAME\" ServerType=\"CASTStorageService\" UserSystem=\"%s\" SystemPassword=\"%s\" ServerName=\"%s:%s\" >\n", dbUser, dbPass, dbHost, dbPort))
 	f.WriteString(fmt.Sprintf("  <ManagePlugins SchemaPrefix=\"%s\" >\n", s))
 	f.WriteString("\n")
 	f.WriteString("	<!-- Extensions: install most recent that has been downloaded -->\n")
@@ -154,23 +154,25 @@ func writeCommonFooter (f *os.File) () {
 func main() {
 	
 	// Make sure required parameters are passed
-	if (len(os.Args) != 5) {
-		fmt.Printf("Please issue command in the following format: command <AIP install location> <db host> <db port> <schema prefix>\n")
-		fmt.Println("Example: upgradeSchemaExtensions_AIP837.exe \"C:\\Program Files\\Cast\\8.3.3\" localhost 2280 foo%")
+	if (len(os.Args) != 7) {
+		fmt.Printf("Please issue command in the following format: command <AIP install location> <dbHost> <dbPort> <dbUser> <dbPass> <schema prefix>\n")
+		fmt.Println("Example: upgradeSchemaExtensions_AIP837.exe \"C:\\Progra~1\\Cast\\8.3\" localhost 2282 operator CastAIP foo%")
 		os.Exit(1)
 	}
 
 	aipDir := os.Args[1]
 	dbHost := os.Args[2]
 	dbPort := os.Args[3]
-	sPrefix := os.Args[4]
+	dbUser := os.Args[4]
+	dbPass := os.Args[5]
+	sPrefix := os.Args[6]
 	
 	// Check if folder location provided is valid
 	if _, err := os.Stat(aipDir); os.IsNotExist(err) {
 		fmt.Printf("Specified AIP directory location is invalid: %s\n", aipDir)
 		fmt.Printf("Please verify and correct\n")
 		os.Exit(1)
-	} 
+	}
 	
 	// Get current directory
 	currDir, panicErr := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -182,7 +184,7 @@ func main() {
 	//defer os.RemoveAll(tempDir)
 	
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s database=postgres sslmode=disable",
-		dbHost, dbPort, DB_USER, DB_PASSWORD)
+		dbHost, dbPort, dbUser, dbPass)
 	db, panicErr := sql.Open("postgres", connStr)
 	if panicErr != nil {panic(panicErr)}
 	defer db.Close()
@@ -226,7 +228,7 @@ func main() {
 			
 			// Write header for the INSTALL_CONFIG_FILE; vary based on schema type
 			if schemaType == "central" || schemaType == "local" || schemaType == "mngt" {
-				writeCommonHeader(f, schemaPrefix, dbHost, dbPort)
+				writeCommonHeader(f, schemaPrefix, dbHost, dbPort, dbUser, dbPass)
 			} else {
 				panic("!!!! Unknown schema type!!!")
 			}
@@ -265,7 +267,7 @@ func main() {
 				fmt.Printf("Schema %s marked for upgrade. Kicking off process.. \n", schemaName)
 				
 				// Execute CAST AIP Server manager to refresh schema
-				cmd := exec.Command("cmd", "/c", aipDir+"\\servman.exe", "-INSTALL_CONFIG_FILE", "("+configFileName+")", "-LOG", "("+logFileName+")")
+				cmd := exec.Command("cmd", "/c", aipDir+"\\servman.exe", "-INSTALL_CONFIG_FILE", "('"+configFileName+"')", "-LOG", "('"+logFileName+"')")
 				fmt.Printf("Executing command: %s\n", cmd.Args)
 				
 				if panicErr := cmd.Run(); panicErr != nil {
