@@ -9,6 +9,35 @@ import(
 	"strings"
 )
 
+func VersionOrdinal(version string) string {
+    // ISO/IEC 14651:2011
+    const maxByte = 1<<8 - 1
+    vo := make([]byte, 0, len(version)+8)
+    j := -1
+    for i := 0; i < len(version); i++ {
+        b := version[i]
+        if '0' > b || b > '9' {
+            vo = append(vo, b)
+            j = -1
+            continue
+        }
+        if j == -1 {
+            vo = append(vo, 0x00)
+            j = len(vo) - 1
+        }
+        if vo[j] == 1 && vo[j+1] == '0' {
+            vo[j+1] = b
+            continue
+        }
+        if vo[j]+1 > maxByte {
+            panic("VersionOrdinal: invalid version")
+        }
+        vo = append(vo, b)
+        vo[j]++
+    }
+    return string(vo)
+}
+
 func copyAndCapture(w io.Writer, r io.Reader) ([]byte, error) {
 	var out []byte
 	buf := make([]byte, 1024, 1024)
@@ -46,9 +75,9 @@ func contains(s []string, e string) bool {
 
 func main(){
 	// Make sure required parameters are passed
-	if (len(os.Args) != 8) {
-		fmt.Printf("Please issue command in the following format: command <AIP install location> <Extend Server URL> <User ID> <Password> <upgrade|install> <official|all> <stable|latest>\n") 
-		fmt.Println("Example: downloadExtensions.exe \"C:\\Program Files\\Cast\\8.3.3\" \"https://extend.castsoftware.com:443/V2/api/v2\" p.rabinovich@castsoftware.com xxxxxx upgrade all stable")
+	if (len(os.Args) != 9) {
+		fmt.Printf("Please issue command in the following format: command <AIP install location> <Extend Server URL> <User ID> <Password> <upgrade|install> <official|all> <stable|latest> <list|download>\n") 
+		fmt.Println("Example: downloadExtensions.exe \"C:\\Program Files\\Cast\\8.3\" \"https://extend.castsoftware.com:443/V2/api/v2\" p.rabinovich@castsoftware.com xxxxxx upgrade all stable download")
 		os.Exit(1)
 	}
 
@@ -76,6 +105,12 @@ func main(){
 		fmt.Println("Incorrect parameter specified. Please provide one of the following options: stable|latest")
 		os.Exit(1)
 	}
+	// list|download
+	listOrDownload := os.Args[8]
+	if !strings.EqualFold(listOrDownload, "list") && !strings.EqualFold(listOrDownload, "download") {
+		fmt.Println("Incorrect parameter specified. Please provide one of the following options: list|download")
+		os.Exit(1)
+	}
 	
 	// Check if folder location provided is valid
 	if _, err := os.Stat(aipDir); os.IsNotExist(err) {
@@ -91,7 +126,7 @@ func main(){
 		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "upgradable")
 	} else {
 		fmt.Printf("Pass 1 - Checking for available extensions...\n")
-		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "available")
+		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "all")
 	}
 	
 	var stdout, stderr []byte
@@ -159,7 +194,8 @@ func main(){
 					installQueue[extID] = extVer
 				} else {
 					// Check if the current version later then the one on install queue and update
-					if val < extVer {
+					//if val < extVer {
+					if VersionOrdinal(val) < VersionOrdinal(extVer) {
 						fmt.Printf("Updating install queue for extension %s version from %s -> %s\n", extID, installQueue[extID], extVer)
 						installQueue[extID] = extVer
 					}
@@ -176,25 +212,30 @@ func main(){
 	
 	// Install all extensions identified
 	for extID, extVer := range installQueue {
-		// Only execute upgrade command if skip flag is not set
-		fmt.Printf("Installing extension: %s %s\n", extID, extVer)
-		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID, "--version", extVer)
-		//fmt.Printf("Executing command: %s\n", cmd.Args)
-		stdoutIn, _ := cmd.StdoutPipe()
-		stderrIn, _ := cmd.StderrPipe()
-		cmd.Start()
-
-		go func() {
-			stdout, errStdout = copyAndCapture(os.Stdout, stdoutIn)
-		}()
-
-		go func() {
-			stderr, errStderr = copyAndCapture(os.Stderr, stderrIn)
-		}()
-		err := cmd.Wait()
-		if err != nil {
-			log.Printf("cmd.Run() failed with %s\n", err)
-			log.Printf("Failed command line: %s\n", cmd.Args)
-		}
+		if listOrDownload == "list" {
+			fmt.Printf("Extension available to %s: %s %s\n", upgradeOrInstall, extID, extVer)
+		} else {
+	
+			// Only execute upgrade command if skip flag is not set
+			fmt.Printf("Executing %s of extension: %s %s\n", upgradeOrInstall, extID, extVer)
+			cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "install", extID, "--version", extVer)
+			//fmt.Printf("Executing command: %s\n", cmd.Args)
+			stdoutIn, _ := cmd.StdoutPipe()
+			stderrIn, _ := cmd.StderrPipe()
+			cmd.Start()
+	
+			go func() {
+				stdout, errStdout = copyAndCapture(os.Stdout, stdoutIn)
+			}()
+	
+			go func() {
+				stderr, errStderr = copyAndCapture(os.Stderr, stderrIn)
+			}()
+			err := cmd.Wait()
+			if err != nil {
+				log.Printf("cmd.Run() failed with %s\n", err)
+				log.Printf("Failed command line: %s\n", cmd.Args)
+			}
+		}		
 	}
 }
