@@ -27,11 +27,12 @@ The script will need to be provided the following parameters:
 - upgrade|install - upgrade will only identify new versions of already downloaded extension. Install will download available extensions that have not yet been installed (aka. run both in order to get latest of installed and newly available extensions)
 - official|all - argument indiciates whether to download CAST Labs and CAST Communition extensions (all) or to consider only extensions published by CAST Product (official)
 - stable|latest - indicates whether to download only stable (skip Alpha and Beta releases) or the latest available
+- list|download - determines whether to provide the list of extensions to install/update to or to actually download them
   
 Here's an example of how you can execute the program:
-downloadExtensions.exe "C:\Program Files\Cast\8.3.3" "https://extend.castsoftware.com:443/V2/api/v2" p.rabinovich@castsoftware.com xxxxxx upgrade all stable
+downloadExtensions.exe "C:\Program Files\Cast\8.3" "https://extend.castsoftware.com:443/V2/api/v2" p.rabinovich@castsoftware.com xxxxxx upgrade all stable download
 
-Note: Currently there is a problem with the ExtensionDownloader.exe CLI that fails to authenticate against when trying to download extensions from https://extend.castsoftware.com:443/V2/api/v2 . The ticket was raised for this issue and the latest status is that this is a known issue that planned for resolution as part of 8.3.5 (Fix already released in July). Meanwhile, as a workaround, please use https://extend.castsoftware.com:443/product instead when executing the script. 
+Note: There is a problem with the ExtensionDownloader.exe CLI in CAST AIP < 8.3.5 that fails to authenticate against when trying to download extensions from https://extend.castsoftware.com:443/V2/api/v2 . The issue is resolved as part of 8.3.5. If using earlier veresion, as workaround, please use https://extend.castsoftware.com:443/product instead when executing the script. 
 
 UpgradeSchemaExtensions Script
 ===============================
