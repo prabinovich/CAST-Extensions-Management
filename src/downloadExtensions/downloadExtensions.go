@@ -126,7 +126,7 @@ func main(){
 		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "upgradable")
 	} else {
 		fmt.Printf("Pass 1 - Checking for available extensions...\n")
-		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "all")
+		cmd = exec.Command(aipDir + "\\ExtensionDownloader.exe", "--server", serverURL, "--username", extUsr, "--password", extPass, "list", "available")
 	}
 	
 	var stdout, stderr []byte
