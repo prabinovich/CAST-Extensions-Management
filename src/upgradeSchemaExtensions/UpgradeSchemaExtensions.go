@@ -1,3 +1,4 @@
+ // Use only for CAST AIP v8.3.6 or below
  package main
 
 import (
