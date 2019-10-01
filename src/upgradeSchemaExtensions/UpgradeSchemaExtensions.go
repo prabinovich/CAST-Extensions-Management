@@ -1,4 +1,4 @@
- // Use only for CAST AIP v8.3.6 or below
+ // To be used with CAST AIP v8.3.7 or above 
  package main
 
 import (
@@ -128,7 +128,7 @@ func writeCommonHeader (f *os.File, s string, dbHost string, dbPort string, dbUs
 	f.WriteString("<CAST-AutomaticInstall>\n")
 	f.WriteString("<!-- Use either ServerName= or ConnectionString= -->\n")
 	f.WriteString(fmt.Sprintf(" <ServerInstall ProfileSystem=\"PROFILE_NAME\" ServerType=\"CASTStorageService\" UserSystem=\"%s\" SystemPassword=\"%s\" ServerName=\"%s:%s\" >\n", dbUser, dbPass, dbHost, dbPort))
-	f.WriteString(fmt.Sprintf("  <RefreshDatabase DbName=\"%s\" >\n", s))
+	f.WriteString(fmt.Sprintf("  <ManagePlugins SchemaPrefix=\"%s\" >\n", s))
 	f.WriteString("\n")
 	f.WriteString("	<!-- Extensions: install most recent that has been downloaded -->\n")
 	
@@ -144,7 +144,7 @@ func writeCommonFooter (f *os.File) () {
 	f.WriteString("   <!-- Extensions: prevents installation from the legacy %programdata%\\CAST\\CAST\\<version> location -->\n")
 	f.WriteString("   <SkipLookupLegacyUADefaultLocation/>\n")
  	f.WriteString("\n")  
-	f.WriteString("  </RefreshDatabase>\n")
+	f.WriteString("  </ManagePlugins>\n")
 	f.WriteString(" </ServerInstall>\n")
 	f.WriteString("</CAST-AutomaticInstall>\n")
 	
@@ -157,7 +157,7 @@ func main() {
 	// Make sure required parameters are passed
 	if (len(os.Args) != 7) {
 		fmt.Printf("Please issue command in the following format: command <AIP install location> <dbHost> <dbPort> <dbUser> <dbPass> <schema prefix>\n")
-		fmt.Println("Example: upgradeSchemaExtensions.exe \"C:\\Progra~1\\Cast\\8.2\" localhost 2280 operator CastAIP foo%")
+		fmt.Println("Example: upgradeSchemaExtensions_AIP837.exe \"C:\\Progra~1\\Cast\\8.3\" localhost 2282 operator CastAIP foo%")
 		os.Exit(1)
 	}
 
@@ -173,7 +173,7 @@ func main() {
 		fmt.Printf("Specified AIP directory location is invalid: %s\n", aipDir)
 		fmt.Printf("Please verify and correct\n")
 		os.Exit(1)
-	} 
+	}
 	
 	// Get current directory
 	currDir, panicErr := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -218,6 +218,7 @@ func main() {
 			// define schema type
 			runes := []rune(schemaName)
 			schemaType := string(runes[strings.LastIndex(schemaName, "_")+1:])
+			schemaPrefix := string(runes[:strings.LastIndex(schemaName, "_")])
 			fmt.Printf ("Schema %s is of type %s\n", schemaName, schemaType)
 			// Create INSTALL_CONFIG_FILE to pass to Server Manager CLI command
 			configFileName := fmt.Sprintf("%s\\%s_refresh.xml", tempDir, schemaName)
@@ -227,12 +228,8 @@ func main() {
 			defer f.Close()
 			
 			// Write header for the INSTALL_CONFIG_FILE; vary based on schema type
-			if schemaType == "central" {
-				writeCommonHeader(f, schemaName, dbHost, dbPort, dbUser, dbPass)
-			} else if schemaType == "local" {
-				writeCommonHeader(f, schemaName, dbHost, dbPort, dbUser, dbPass)
-			} else if schemaType == "mngt" {
-				writeCommonHeader(f, schemaName, dbHost, dbPort, dbUser, dbPass)
+			if schemaType == "central" || schemaType == "local" || schemaType == "mngt" {
+				writeCommonHeader(f, schemaPrefix, dbHost, dbPort, dbUser, dbPass)
 			} else {
 				panic("!!!! Unknown schema type!!!")
 			}

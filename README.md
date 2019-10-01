@@ -1,8 +1,9 @@
-# ExtensionsUpgrade
-Tools to download latest versions of CAST AIP extensions and upgrade respective schemas. The project currently includes two Go scripts:
+# CAST Extensions Management Tools
+The tools are built on top of Server Manager CLI to simplify management of extensions on a single or multiple applications at the same time. The project includes the following Go scripts:
 
 1. downloadExtensions.go - script that identifies available extensions and installs or upgrades them based on the provided command line arguments
 2. UpgradeSchemaExtensions.go - script that will evaluate extensions installed in designated CAST schemas and see if any of those extensions have newer versions downloaded. If there are, it will update those schemas with latest versions of those extensions
+3. installSchemaExtensions.go - script is used to install or remove specific extensions from a single or multiple schemas
 
 The project includes both the scripts and executables. To run the executables you don't need anything other then EXE file itself. If you need to make changes/updates to the scripts, you can do that and use the following instructions to rebuild:
 
@@ -44,3 +45,15 @@ The script will need to be provided the following parameters:
 
 Here's an example of how to execute the program:
 upgradeSchemaExtensions.exe "C:\Program Files\Cast\8.3.3" localhost 2282 foo%
+
+InstallSchemaExtensions Script
+===============================
+Script is used to install or remove specific set of extensions from a single or multiple schemas. The script will need to be provided the following parameters when executed:
+- AIP install location - location of where CAST AIP is installed; Make sure to user short folder notation (i.e. C:\Progra~1\... instead of C:\Program Files\...). Otherwise put the path in quotes.
+- db host - name or IP of the server that hosts cast storage services CSS (ex: localhost)
+- db port - port number on which CSS runs (ex: 2282)
+- schema prefix - schema prefix that should be considered for upgrade. The prefix can include % as part of the string to represent a wildcard or just % to include all schemas hosted on the designed CSS server. For instance: foo%
+- Config File Path - location of the file that defines which extensions to install or remove from the designated schemas. The file should list one extension name per line. If you want to install specific version of extension, add equals sign "=" followed by the the extension version number. For instance: com.castsoftware.qualitystandards=20190923.0.0-funcrel. To remove an extension, use "remove" in place of the version number, such as: com.castsoftware.qualitystandards=remove
+
+Here's an example of how to execute the program:
+installSchemaExtensions.exe "C:\Program Files\Cast\8.3.3" localhost 2282 sandbox% "c:\temp\extensions.txt"

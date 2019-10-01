@@ -1,5 +1,3 @@
-/tools.zip
-CAST[0-9]+
-*.castlog
-*.xml
-*.txt
+# ingore all files/folders except for executable files
+*
+!*.exe
