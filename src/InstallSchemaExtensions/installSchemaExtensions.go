@@ -294,17 +294,24 @@ func main() {
 		fmt.Printf("Number of extenions updates to %s schema: %d\n", schemaName, len(aExt2Install))
 		var bInstallFlag bool = false
 		for _, element := range aExt2Install {
-			// Check if the extension is already installed and the version matches up
-			if schemaExtMap[element[0]] == element[1] {
-				fmt.Printf("%s=%s extension is already installed on %s schema... skipping\n", element[0], element[1], schemaName)
-			} else {
-				// Add extension entry to INSTALL_CONFIG_FILE
-				fmt.Printf("Addiing %s=%s extension to be installed on %s schema\n", element[0], element[1], schemaName)
-				bInstallFlag = true // Marking schema for upgrade
-				if len(element) < 2 {
-					f.WriteString(fmt.Sprintf("   <Plugin id=\"%s\"/>\n", element[0]))
+			if element[1] == "remove" { // Handle special use case to remove extension
+				// Check if extension exists
+				if _, ok := schemaExtMap[element[0]]; ok {
+				    fmt.Printf("Extension %s found on schema %s. Marking for removal\n", element[0], schemaName)
+				    f.WriteString(fmt.Sprintf("   <Plugin id=\"%s\" version=\"%s\"/>\n", element[0], element[1]))
+				    bInstallFlag = true // Marking schema for update
 				} else {
+					fmt.Printf("Extension %s was NOT found on schema %s... skipping\n", element[0], schemaName)
+				}
+			} else {
+				// Check if the extension is already installed and the version matches up
+				if schemaExtMap[element[0]] == element[1] {
+					fmt.Printf("%s=%s extension is already installed on %s schema... skipping\n", element[0], element[1], schemaName)
+				} else {
+					// Add extension entry to INSTALL_CONFIG_FILE
+					fmt.Printf("Addiing %s=%s extension to be installed on %s schema\n", element[0], element[1], schemaName)
 					f.WriteString(fmt.Sprintf("   <Plugin id=\"%s\" version=\"%s\"/>\n", element[0], element[1]))
+					bInstallFlag = true // Marking schema for update
 				}
 			}
 		}
@@ -328,7 +335,7 @@ func main() {
 				fmt.Printf("Schema %s processed successfully\n", schemaName)
 			}
 		} else {
-			fmt.Printf("No extensions found to install. Skipping schema %s\n", schemaName)
+			fmt.Printf("No extensions found to install or remove. Skipping schema %s\n", schemaName)
 		}
 		bInstallFlag = false // reset upgrade flag for next schema
 	}
