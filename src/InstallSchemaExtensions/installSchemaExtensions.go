@@ -211,9 +211,9 @@ func writeCommonFooter (f *os.File) () {
 func main() {
 	
 	// Make sure required parameters are passed
-	if (len(os.Args) != 8) {
-		fmt.Printf("Please issue command in the following format: command <AIP-install-location> <dbHost> <dbPort> <dbUser> <dbPass> <schema prefix> <Ext-config-file-path>\n")
-		fmt.Println("Example: InstallSchemaExtensions.exe \"C:\\Program Files\\Cast\\8.2\" localhost 2280 operator CastAIP foo% c:\\temp\\extensions.txt")
+	if (len(os.Args) !=9) {
+		fmt.Printf("Please issue command in the following format: command <AIP-install-location> <dbHost> <dbPort> <dbUser> <dbPass> <schema regex prefix> <Ext-config-file-path> <info|update>\n")
+		fmt.Println("Example: InstallSchemaExtensions.exe \"C:\\Program Files\\Cast\\8.3\" localhost 2282 operator CastAIP [a-z].* \"c:\\temp\\extensions.txt\" update")
 		os.Exit(1)
 	}
 
@@ -224,6 +224,13 @@ func main() {
 	dbPass := os.Args[5]
 	sPrefix := os.Args[6]
 	extFilePath := os.Args[7]
+	
+	// info|update
+	infoOrUpdate := os.Args[8]
+	if !strings.EqualFold(infoOrUpdate, "info") && !strings.EqualFold(infoOrUpdate, "update") {
+		fmt.Println("Incorrect parameter value specified. Please provide one of the following options: info|update")
+		os.Exit(1)
+	}
 	
 	// Check if folder location provided is valid
 	if _, err := os.Stat(aipDir); os.IsNotExist(err) {
@@ -260,7 +267,8 @@ func main() {
 
 	// Find all CAST management schemas using the naming convention
 	fmt.Printf("Enumerating available CAST management schemas on %s:%s\n", dbHost, dbPort)
-	qry := fmt.Sprintf("select schema_name from information_schema.schemata where schema_name like '%s_mngt' order by schema_name", sPrefix)
+	//qry := fmt.Sprintf("select schema_name from information_schema.schemata where schema_name like '%s_mngt' order by schema_name", sPrefix)
+	qry := fmt.Sprintf("select schema_name from information_schema.schemata where schema_name ~ '^%s_mngt$' order by schema_name", sPrefix)
 	//fmt.Printf("Executing query: \n%s\n\n", qry)
 	schemaRows, panicErr := db.Query(qry)
 	if panicErr != nil {panic(panicErr)}
@@ -328,11 +336,16 @@ func main() {
 			fmt.Printf("Executing command: %s\n", cmd.Args)
 			fmt.Printf("Running... \n")
 			
-			if panicErr := cmd.Run(); panicErr != nil {
-				//log.Fatalf("cmd.Run() failed with %s\n", panicErr)
-				fmt.Printf("cmd.Run() failed with %s\n", panicErr)
+			// Run command line if instructed
+			if infoOrUpdate == "update" {
+				if panicErr := cmd.Run(); panicErr != nil {
+					//log.Fatalf("cmd.Run() failed with %s\n", panicErr)
+					fmt.Printf("cmd.Run() failed with %s\n", panicErr)
+				} else {
+					fmt.Printf("Schema %s processed successfully\n", schemaName)
+				}
 			} else {
-				fmt.Printf("Schema %s processed successfully\n", schemaName)
+				fmt.Printf("Command run in INFO mode only. Schema %s has NOT been updated\n", schemaName)
 			}
 		} else {
 			fmt.Printf("No extensions found to install or remove. Skipping schema %s\n", schemaName)

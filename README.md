@@ -54,6 +54,8 @@ Script is used to install or remove specific set of extensions from a single or 
 - db port - port number on which CSS runs (ex: 2282)
 - schema prefix - schema prefix that should be considered for upgrade. The prefix can include % as part of the string to represent a wildcard or just % to include all schemas hosted on the designed CSS server. For instance: foo%
 - Config File Path - location of the file that defines which extensions to install or remove from the designated schemas. The file should list one extension name per line. If you want to install specific version of extension, add equals sign "=" followed by the the extension version number. For instance: com.castsoftware.qualitystandards=20190923.0.0-funcrel. To remove an extension, use "remove" in place of the version number, such as: com.castsoftware.qualitystandards=remove
+- Info or Update - flag that indicates whether to update schemas with requested extensions or to report which extensions will be installed in which schemas
 
 Here's an example of how to execute the program:
-installSchemaExtensions.exe "C:\Program Files\Cast\8.3.3" localhost 2282 sandbox% "c:\temp\extensions.txt"
+installSchemaExtensions.exe "C:\Program Files\Cast\8.3" localhost 2282 [a-z].* "c:\temp\extensions.txt" update
+
