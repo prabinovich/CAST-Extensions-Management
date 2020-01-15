@@ -1,8 +1,8 @@
 # CAST Extensions Management Tools
 The tools are built on top of Server Manager CLI to simplify management of extensions on a single or multiple applications at the same time. The project includes the following Go scripts:
 
-1. downloadExtensions.go - script that identifies available extensions and installs or upgrades them based on the provided command line arguments
-2. UpgradeSchemaExtensions.go - script that will evaluate extensions installed in designated CAST schemas and see if any of those extensions have newer versions downloaded. If there are, it will update those schemas with latest versions of those extensions
+1. downloadExtensions.go - script that identifies extensions available on the remote Extend.com server and downloads them to them locally to the server. The script provides ability to download only extensions previous versions of which already exist or to download all extensions available.
+2. UpgradeSchemaExtensions.go - script that will evaluate extensions installed in designated CAST schemas and see if any of those extensions have newer versions available locally. If there are, it will update those schemas with latest versions of those extensions.
 3. installSchemaExtensions.go - script is used to install or remove specific extensions from a single or multiple schemas
 4. migrateSchemas.go - script to migrate schema version from old to new version of CAST AIP
 
