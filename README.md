@@ -73,7 +73,7 @@ Provide the following parameters to the command when executing in the following 
 	CAST_DEFAULT_DEPLOY_DIR=S:\Dmt\8.3.11\Deploy<br>
 	CAST_DEFAULT_LISA_DIR=S:\Storage\8.3<br>
 	CAST_LOG_ROOT_PATH=S:\Logs\8.3<br>
-	<i>See example of the configuration file <a href="src/migrateSchemas/AipEnvironConfig.txt"><u>here</u></a></i>
+	<i>See example of the configuration file <a href="src/migrateSchemas/AipEnvironConfigs.txt">here</a></i>
 - db host - name or IP of the server that hosts cast storage services CSS (ex: localhost)
 - db port - port number on which CSS runs (ex: 2282)
 - schema regex prefix - regular expression that describes the names of schemas that should be considered for upgrade. For instance: [a-z].* will select all schemas that are available on target CSS server.
