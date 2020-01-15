@@ -4,6 +4,7 @@ The tools are built on top of Server Manager CLI to simplify management of exten
 1. downloadExtensions.go - script that identifies available extensions and installs or upgrades them based on the provided command line arguments
 2. UpgradeSchemaExtensions.go - script that will evaluate extensions installed in designated CAST schemas and see if any of those extensions have newer versions downloaded. If there are, it will update those schemas with latest versions of those extensions
 3. installSchemaExtensions.go - script is used to install or remove specific extensions from a single or multiple schemas
+4. migrateSchemas.go - script to migrate schema version from old to new version of CAST AIP
 
 The project includes both the scripts and executables. To run the executables you don't need anything other then EXE file itself. If you need to make changes/updates to the scripts, you can do that and use the following instructions to rebuild:
 
@@ -52,10 +53,29 @@ Script is used to install or remove specific set of extensions from a single or 
 - AIP install location - location of where CAST AIP is installed; Make sure to user short folder notation (i.e. C:\Progra~1\... instead of C:\Program Files\...). Otherwise put the path in quotes.
 - db host - name or IP of the server that hosts cast storage services CSS (ex: localhost)
 - db port - port number on which CSS runs (ex: 2282)
-- schema prefix - schema prefix that should be considered for upgrade. The prefix can include % as part of the string to represent a wildcard or just % to include all schemas hosted on the designed CSS server. For instance: foo%
+- schema regex prefix - regular expression that describes the names of schemas that should be considered for upgrade. For instance: [a-z].* will select all schemas that are available on target CSS server.
 - Config File Path - location of the file that defines which extensions to install or remove from the designated schemas. The file should list one extension name per line. If you want to install specific version of extension, add equals sign "=" followed by the the extension version number. For instance: com.castsoftware.qualitystandards=20190923.0.0-funcrel. To remove an extension, use "remove" in place of the version number, such as: com.castsoftware.qualitystandards=remove
 - Info or Update - flag that indicates whether to update schemas with requested extensions or to report which extensions will be installed in which schemas
 
 Here's an example of how to execute the program:
 installSchemaExtensions.exe "C:\Program Files\Cast\8.3" localhost 2282 [a-z].* "c:\temp\extensions.txt" update
 
+MigrateSchemas Script
+===============================
+Script is used to migrate CAST AIP schemas from an older to new version. The command needs to be issued in the following format:
+migrateSchemas.exe <configFile> <dbHost> <dbPort> <dbUser> <dbPass> <schema regex prefix> <info|update>
+
+Provide the following parameters to the command when executing in the following order:
+- configFile - location of the configuration file. The configuration file must define the following parameters:
+	AIP_HOME=C:\PROGRA~1\Cast\8.3 (make sure to use short name notation to specify location of CAST AIP home directory) 
+	AIP_VERSION=8.3.11.2 (version of CAST AIP that you are migrating; must already be installed on target machine)
+	CAST_DEFAULT_DELIVERY_DIR=S:\Dmt\8.3.11\Delivery
+	CAST_DEFAULT_DEPLOY_DIR=S:\Dmt\8.3.11\Deploy
+	CAST_DEFAULT_LISA_DIR=S:\Storage\8.3
+	CAST_LOG_ROOT_PATH=S:\Logs\8.3
+- db host - name or IP of the server that hosts cast storage services CSS (ex: localhost)
+- db port - port number on which CSS runs (ex: 2282)
+- schema regex prefix - regular expression that describes the names of schemas that should be considered for upgrade. For instance: [a-z].* will select all schemas that are available on target CSS server.
+- Info or Update - flag that indicates whether to update schemas with requested extensions or to just list the schemas that will need to be migrated
+
+Example: migrateSchemas.exe \"c:\\temp\\config.txt\" localhost 2282 operator CastAIP [a-z].* update
