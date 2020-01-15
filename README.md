@@ -67,12 +67,12 @@ migrateSchemas.exe <configFile> <dbHost> <dbPort> <dbUser> <dbPass> <schema rege
 
 Provide the following parameters to the command when executing in the following order:
 - configFile - location of the configuration file. The configuration file must define the following parameters:
-	AIP_HOME=C:\PROGRA~1\Cast\8.3 (make sure to use short name notation to specify location of CAST AIP home directory)\n
-	AIP_VERSION=8.3.11.2 (version of CAST AIP that you are migrating; must already be installed on target machine)\n
-	CAST_DEFAULT_DELIVERY_DIR=S:\Dmt\8.3.11\Delivery\n
-	CAST_DEFAULT_DEPLOY_DIR=S:\Dmt\8.3.11\Deploy\n
-	CAST_DEFAULT_LISA_DIR=S:\Storage\8.3\n
-	CAST_LOG_ROOT_PATH=S:\Logs\8.3\n
+	AIP_HOME=C:\PROGRA~1\Cast\8.3 (make sure to use short name notation to specify location of CAST AIP home directory)<br>
+	AIP_VERSION=8.3.11.2 (version of CAST AIP that you are migrating; must already be installed on target machine)<br>
+	CAST_DEFAULT_DELIVERY_DIR=S:\Dmt\8.3.11\Delivery<br>
+	CAST_DEFAULT_DEPLOY_DIR=S:\Dmt\8.3.11\Deploy<br>
+	CAST_DEFAULT_LISA_DIR=S:\Storage\8.3<br>
+	CAST_LOG_ROOT_PATH=S:\Logs\8.3<br>
 - db host - name or IP of the server that hosts cast storage services CSS (ex: localhost)
 - db port - port number on which CSS runs (ex: 2282)
 - schema regex prefix - regular expression that describes the names of schemas that should be considered for upgrade. For instance: [a-z].* will select all schemas that are available on target CSS server.
